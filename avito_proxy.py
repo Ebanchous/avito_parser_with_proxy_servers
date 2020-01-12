@@ -96,7 +96,7 @@ def main():
 			attempt += 1
 			pass
 	for i in range(1, total_pages):
-		url_gen = base_url + page_part + str(i) + query_part
+		url_gen = base_url + query_part + page_part + str(i)
 		html = None
 		attempt = 1
 		while html is None:
