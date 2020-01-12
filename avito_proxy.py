@@ -52,7 +52,10 @@ def write_csv(data):
 def get_page_data(html):
 	# title price date 
 	soup = BeautifulSoup(html, 'lxml')
-	ads = soup.find('div', class_= 'js-catalog_serp').find_all('div', class_= 'snippet-horizontal item item_table clearfix js-catalog-item-enum item-with-contact js-item-extended')
+	try:
+		ads = soup.find('div', class_= 'js-catalog_serp').find_all('div', class_= 'snippet-horizontal item item_table clearfix js-catalog-item-enum item-with-contact js-item-extended')
+	except:
+		pass
 	for ad in ads:
 		try:
 			title = ad.find('div', class_='item_table-header').find('h3').text.strip()		
