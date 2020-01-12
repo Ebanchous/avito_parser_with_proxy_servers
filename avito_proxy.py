@@ -20,11 +20,11 @@ def find_proxy():
 
 
 
-def get_html(url, proxy):
+def get_html(url, proxy, timeout):
 	ua = UserAgent()
 	header = {'User-Agent':str(ua.chrome)}
 	#headers = {'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/39.0.2171.95 Safari/537.36'}
-	r = requests.get(url, headers=header, proxies = proxy)
+	r = requests.get(url, headers=header, proxies = proxy, timeout = timeout)
 	return r.text
 
 def get_total_pages(html):
@@ -80,16 +80,19 @@ def get_page_data(html):
 def main():
 	base_url = 'https://www.avito.ru/moskva/nastolnye_kompyutery?'
 	page_part = 'p='
-	query_part = '&user=1'  
+	query_part = 'cd=1&user=1&q=pc&'
+	url = 'https://www.avito.ru/moskva/nastolnye_kompyutery?cd=1&user=1&q=pc&p=1'  
 	total_pages = None
+	timeout = 20
 	attempt = 1
 	while total_pages is None:
+		print()
 		try:
 			proxy = find_proxy()
 			print(f'Found proxy to get number of pages: {proxy}')
-			total_pages = get_total_pages(get_html(url, proxy))
-		except:
-			print(f'Attempt {attempt} failed, something wrong, try more proxies')
+			total_pages = get_total_pages(get_html(url, proxy, timeout))
+		except Exception as err:
+			print(f'Attempt {attempt} failed,because of {err.args}, let us try more proxies')
 			attempt += 1
 			pass
 	for i in range(1, total_pages):
@@ -100,7 +103,7 @@ def main():
 			try:
 				proxy = find_proxy()
 				print(f'Found proxy to grab the info: {proxy}')
-				html = get_html(url_gen, proxy)
+				html = get_html(url_gen, proxy, timeout)
 			except:
 				print(f'Attempt {attempt} failed, something wrong, try more proxies')
 				attempt += 1
