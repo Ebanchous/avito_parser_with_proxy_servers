@@ -104,11 +104,12 @@ def main():
 		attempt = 1
 		while html is None:
 			try:
-				proxy = find_proxy()
+				
 				print(f'Found proxy to grab the info: {proxy}')
 				html = get_html(url_gen, proxy, timeout)
 			except Exception as err:
 				print(f'Attempt {attempt} failed,because of {err.args}, let us try more proxies')
+				proxy = find_proxy()
 				attempt += 1
 				pass
 		get_page_data(html)
