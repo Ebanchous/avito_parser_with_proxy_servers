@@ -9,9 +9,18 @@ from datetime import datetime
 def find_proxy():
 
 	proxies_list = []
-	res = requests.get('https://free-proxy-list.net/', headers={'User-Agent':'Mozilla/5.0'})
+	proxies = {}
+	i = True
+	while i == True:
+		try:
+			res = requests.get('https://free-proxy-list.net/', headers={'User-Agent':'Mozilla/5.0'})
+			i = False
+		except Exception as err:
+			print(f'while searching for proxies we failed \n because of {err.args}, \n let us try else')
+			pass
 	soup = BeautifulSoup(res.text,"lxml")
-	for items in soup.select("#proxylisttable tbody tr")[50:random.randint(51,75)]:
+	random_proxy = random.randint(1,50)
+	for items in soup.select("#proxylisttable tbody tr")[random_proxy:random.randint(random_proxy + 1 ,75)]:
 		proxy_list = ':'.join([item.text for item in items.select("td")[:2]])
 		temp = ('https://' + str(proxy_list))
 		proxies={
@@ -31,7 +40,7 @@ def get_html(url, proxy, timeout):
 			r = requests.get(url, headers=header, proxies = proxy, timeout = timeout)
 			i = False
 		except Exception as err:
-			print(f'while processing {proxies} we failed \n because of {err.args}, let us try more proxies')
+			print(f'while processing {proxy} we failed \n because of {err.args}, let us try more proxies')
 			pass	
 	return r.text
 
@@ -95,10 +104,11 @@ def get_page_data(html):
 		write_csv(data) 
 
 def main():
-	base_url = 'https://www.avito.ru/moskva/nastolnye_kompyutery?'
+	base_url = 'https://www.avito.ru/moskva/'
+	topic = 'nastolnye_kompyutery'#'nastolnye_kompyutery'gotoviy_biznes
 	page_part = 'p='
-	query_part = 'cd=1&user=1&q=pc&'
-	url = 'https://www.avito.ru/moskva/nastolnye_kompyutery?cd=1&user=1&q=pc&p=1'  
+	query_part = '?cd=1&user=1&q=pc&'
+	url = 'https://www.avito.ru/moskva/' + topic  
 	total_pages = None
 	timeout = 20
 	attempt = 1
@@ -108,29 +118,29 @@ def main():
 			proxy = find_proxy()
 			print(f'Found proxy to get number of pages: {proxy}')
 			total_pages = get_total_pages(get_html(url, proxy, timeout))
+			print(f'found as many pages as {total_pages}')
 		except Exception as err:
 			print(f'Attempt {attempt} failed,because of {err.args}, let us try more proxies')
 			attempt += 1
 			pass
 	for i in range(1, total_pages):
-		url_gen = base_url + query_part + page_part + str(i)
+		url_gen = base_url + topic + query_part + page_part + str(i)
 		html = None
 		attempt = 1
+		print(f'Trying to process the following url: {url_gen}')
 		while html is None:
 			try:
 				print(f'Found proxy to grab the info: {proxy}')
 				html = get_html(url_gen, proxy, timeout)
 			except Exception as err:
-				
-				print(f'Attempt {attempt} failed,because of {err.args}, let us try more proxies')
+				print(f'Attempt # {attempt} failed, because of {err.args}, let us try more proxies')
 				proxy = find_proxy()
 				attempt += 1
 				pass
 		get_page_data(html)
-		print(f'Page number {i} ready')
+		print(f'Page number {i} out of {total_pages} is ready')
 
 
 
 if __name__ == '__main__':
 	main()
-
