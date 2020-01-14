@@ -3,6 +3,7 @@ from bs4 import BeautifulSoup
 import csv
 from fake_useragent import UserAgent
 import random
+from datetime import datetime
 
 
 def find_proxy():
@@ -24,7 +25,13 @@ def get_html(url, proxy, timeout):
 	ua = UserAgent()
 	header = {'User-Agent':str(ua.chrome)}
 	#headers = {'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/39.0.2171.95 Safari/537.36'}
-	r = requests.get(url, headers=header, proxies = proxy, timeout = timeout)
+	while i = True:
+		try:
+			r = requests.get(url, headers=header, proxies = proxy, timeout = timeout)
+			i = False
+		except:
+			print('Encountered error in getting HTML')
+			pass
 	return r.text
 
 def get_total_pages(html):
@@ -35,19 +42,22 @@ def get_total_pages(html):
 	return int(total_pages)
 
 def write_csv(data):
-	with open(r'C:\Users\DSimonov\Documents\scripts\avito\avito.csv', 'a') as f:
-		writer = csv.writer(f, delimiter =';')
-		# writer.writerow((
-		#  				data['price'],
-		#  				))
+	try:
+		with open(r'C:\Users\DSimonov\Documents\scripts\avito\avito.csv', 'a', newline='') as f:
+			writer = csv.writer(f, delimiter =';')
+			# writer.writerow((
+			#  				data['price'],
+			#  				))
 
-		writer.writerow((
+			writer.writerow((
 		 				data['metro'],
 		 				data['url'],
 		 				data['price'],
 		 				data['title'],
-		 				))
-
+		 				data['time_of_completion']))
+	except:
+		print("cannot write CSV")
+		pass
 
 def get_page_data(html):
 	# title price date 
@@ -74,10 +84,13 @@ def get_page_data(html):
 			metro =  ad.find('div', class_='item-address').find('span', class_='item-address-georeferences-item__content').text.strip()
 		except:
 			metro = ''
+		now = datetime.now()
+		current_time = now. strftime("%H:%M:%S")	
 		data = {'title': title,
 				'url': url,
 				'price': price,
-				'metro': metro}
+				'metro': metro,
+				'time_of_completion':current_time}
 		write_csv(data) 
 
 def main():
@@ -104,10 +117,10 @@ def main():
 		attempt = 1
 		while html is None:
 			try:
-				
 				print(f'Found proxy to grab the info: {proxy}')
 				html = get_html(url_gen, proxy, timeout)
 			except Exception as err:
+				
 				print(f'Attempt {attempt} failed,because of {err.args}, let us try more proxies')
 				proxy = find_proxy()
 				attempt += 1
