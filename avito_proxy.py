@@ -25,13 +25,14 @@ def get_html(url, proxy, timeout):
 	ua = UserAgent()
 	header = {'User-Agent':str(ua.chrome)}
 	#headers = {'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/39.0.2171.95 Safari/537.36'}
-	while i = True:
+	i = True
+	while i == True:
 		try:
 			r = requests.get(url, headers=header, proxies = proxy, timeout = timeout)
 			i = False
-		except:
-			print('Encountered error in getting HTML')
-			pass
+		except Exception as err:
+			print(f'while processing {proxies} we failed \n because of {err.args}, let us try more proxies')
+			pass	
 	return r.text
 
 def get_total_pages(html):
@@ -132,3 +133,4 @@ def main():
 
 if __name__ == '__main__':
 	main()
+
