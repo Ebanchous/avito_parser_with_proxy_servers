@@ -4,6 +4,11 @@ import csv
 from fake_useragent import UserAgent
 import random
 from datetime import datetime
+import time
+
+def time_sleep():
+	time.sleep(0.05)
+
 
 def find_proxy():
 
@@ -15,7 +20,7 @@ def find_proxy():
 			res = requests.get('https://free-proxy-list.net/', headers={'User-Agent':'Mozilla/5.0'})
 			i = False
 		except Exception as err:
-			print(f'while searching for proxies we failed \n because of {err.args}, \n let us try else')
+#			print(f'while searching for proxies we failed \n because of {err.args}, \n let us try else')
 			pass
 	soup = BeautifulSoup(res.text,"lxml")
 	random_proxy = random.randint(1,50)
@@ -43,45 +48,63 @@ def get_total_pages(html):
 		total_pages = pages.split('=')[-1]	
 #		print(total_pages)
 	except Exception as err:
-		print(f'Attempt failed,because of {err.args}')
+#		print(f'Attempt failed,because of {err.args}')
 		pass
-	print(f'Total pages = {total_pages}')
+#	print(f'Total pages = {total_pages}')
 	return int(total_pages)
 
 def write_csv(data):
-	print('trying to save CSV')
-	with open(r'C:\Users\DSimonov\Documents\scripts\avito\4_lapy.csv', 'a', newline='', encoding='cp1251', errors='replace') as f:
+#	print('trying to save CSV')
+	with open('4_lapy.csv', 'a', newline='', encoding='cp1251', errors='replace') as f:
 		try:
 			writer = csv.writer(f, delimiter =';')
 			writer.writerow((
+		 				data['chapter'],
 		 				data['title'],
+		 				data['description'],
 		 				data['weight'],
 		 				data['price'],
 		 				data['currency'],
 		 				data['url'],
 		 				data['time_of_completion']))
-		except Exception as err:
-			print(f'Cannot write CSV because of {err.args}')
-		print('saved suceessfully')
+		except:#
+			pass
+		#Exception as err:
+#			print(f'Cannot write CSV because of {err.args}')
+#		print('saved suceessfully')
 
 def get_page_data(html):
 	# title price date 
+	data = {}
 	soup = BeautifulSoup(html, 'lxml')
-	print('geting_page_data')
+#	print('geting_page_data')
 	try:
-		ads = soup.find('div', class_= 'b-common-wrapper b-common-wrapper--visible js-catalog-wrapper').find_all('div', class_= 'b-common-item  b-common-item--catalog-item js-product-item')
-		print('ads found')
+		ads = soup.find('div', class_= 'b-common-wrapper b-common-wrapper--visible js-catalog-wrapper').find_all('div', class_= 'b-common-item b-common-item--catalog-item js-product-item')
+#		print('ads found')
+#		print(ads)
 	except:
 		ads = ''
-		print('no ads found')
-		
+#		print('no ads found')
 	for ad in ads:
+#		print(ad)
+		try:
+			chapter = soup.find('div', class_='b-page-wrapper js-this-scroll').find('main', class_='b-wrapper').find('div', class_='b-catalog js-preloader-fix').find('div', class_='b-container b-container--catalog-filter js-container-catalog-filter').find('div', class_='b-catalog__wrapper-title b-catalog__wrapper-title--filter').find('h1', class_='b-title b-title--h1 b-title--catalog-filter').text.strip()		
+
+		except:
+			chapter = ''
+
 		try:
 			title = ad.find('div', class_='b-common-item__info-center-block').find('span', class_='span-strong').text.strip()		
 		except:
 			title = ''
+		try:
+			description = ad.find('div', class_='b-common-item__info-center-block').find('span').text.splitlines()[-1].strip()		
+
+		except:
+			description = ''
 		try:	
-			url = 'https://4lapy.ru/' + ad.find('a', class_='b-common-item__description-wrap js-item-link').find('a').get('href')
+			url = 'https://4lapy.ru/' + ad.find('a', class_='b-common-item__description-wrap js-item-link').get('href')
+
 		except:
 			url = ''	
 		try:	
@@ -98,13 +121,16 @@ def get_page_data(html):
 			currency = ''
 		now = datetime.now()
 		current_time = now. strftime("%H:%M:%S")	
-		data = {'title': title,
+		data = {
+				'chapter': chapter,
+				'title': title,
+				'description': description,
 				'url': url,
 				'price': price,
 				'currency': currency,
 				'time_of_completion':current_time,
 				'weight': weight}
-		print('saving to csv')
+	#	print('saving to csv')
 		write_csv(data) 
 
 
@@ -119,7 +145,7 @@ def topic_lvl1(html):
 #		print(topic_level_2)
 		for item in topic_level_2:
 			topic_temp = item.find('a', class_= 'b-filter-link-list__link').get('href')
-			print(topic_temp)
+#			print(topic_temp)
 			topics.append(topic_temp)
 	return topics
 
@@ -137,43 +163,43 @@ def main():
 	while topics is None:
 		try:
 			proxy = find_proxy()
-			print(f'Found proxy to get number of pages: {proxy}. This is {attempt} attempt.')
+	#		print(f'Found proxy to get number of pages: {proxy}. This is {attempt} attempt.')
 			topics = topic_lvl1(get_html(base_url, timeout, proxy))
 		except Exception as err:
-			print(f'Attempt to obtain list of links number {attempt} failed, because of {err.args}, let us try more proxies')
+#			print(f'Attempt to obtain list of links number {attempt} failed, because of {err.args}, let us try more proxies')
 			attempt += 1
 			pass
 	for url in topics:
+		print('processing path: ', url)
 		total_pages = None
 		attempt = 1	
 		while total_pages is None:
 			try:
-				print(f'Looking for amount of pages (url: {url_head + url}). This is {attempt} attempt')
+	#			print(f'Looking for amount of pages (url: {url_head + url}). This is {attempt} attempt')
 				total_pages = get_total_pages(get_html(url_head + url, timeout, proxy))	
 			except Exception as err:	
-				print(f'Attempt of counting pages {attempt} failed, because of {err.args}, let us try more proxies')
+	#			print(f'Attempt of counting pages {attempt} failed, because of {err.args}, let us try more proxies')
 				attempt += 1
 				proxy = find_proxy()
 				pass
 		for i in range(1,total_pages):
 			url_generated = url_head + url + intermed_url + str(i)
-			print('processing page: ', url_generated)
+	#		print('processing page: ', url_generated)
 			html = None
 			attempt = 1
 			while html is None:
 				try:
-					print(f'Trying to gather page data from {url_generated}. This is {attempt} attempt.')
+	#				print(f'Trying to gather page data from {url_generated}. This is {attempt} attempt.')
 					html = get_html(url_generated, timeout, proxy)
-					print(f'Found information in {url_generated}')
+	#				print(f'Found information in {url_generated}')
 				except Exception as err:
 					proxy = find_proxy()
-					print(f'Attempt of getting page data {attempt} failed, because of {err.args}, let us try more proxies')
+	#				print(f'Attempt of getting page data {attempt} failed, because of {err.args}, let us try more proxies')
 					attempt += 1
 					pass
-			print(f'Try to process page {url_generated} to extract data and save to CSV')
+	#		print(f'Try to process page {url_generated} to extract data and save to CSV')
 			get_page_data(html)
 
 	print("done")
 if __name__ == '__main__':
 	main()
-
